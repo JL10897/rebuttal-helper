@@ -1,0 +1,25 @@
+Official Review of Submission 1234 by Reviewer Ab12
+Rating: 4: marginally below the acceptance threshold
+Confidence: 3
+
+Strengths:
+The paper studies an important and timely problem. The proposed dataset is carefully constructed and the annotation guidelines are clearly documented.
+
+Weaknesses:
+The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods.
+The ablation in Section 5 removes components one at a time, but never tests them together.
+
+Questions:
+Could the authors compare against at least one recent baseline?
+How sensitive are the results to the choice of random seed?
+
+Official Review of Submission 1234 by Reviewer Cd34
+Rating: 6: marginally above the acceptance threshold
+Confidence: 4
+
+Strengths:
+The writing is clear and the figures are easy to follow. I appreciate that the authors release code and data.
+
+Weaknesses:
+The human study has only 12 participants, which limits the strength of the conclusions.
+There are several typos, e.g. "dataest" in Table 2.

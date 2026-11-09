@@ -1,0 +1,36 @@
+{
+  "title": "Rebuttal Notes: Toy Example",
+  "pageId": "toy-example",
+  "reviewers": [
+    {
+      "name": "Ab12",
+      "score": "Rating 4 · Confidence 3",
+      "strengths": [
+        {"label": "Strength", "text": "The paper studies an important and timely problem. The proposed dataset is carefully constructed and the annotation guidelines are clearly documented."}
+      ],
+      "points": [
+        {"title": "Only two older baselines",
+         "quotes": [
+           {"label": "Weakness", "text": "The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods."},
+           {"label": "Question", "text": "Could the authors compare against at least one recent baseline?"}]},
+        {"title": "Ablation never combines components",
+         "quotes": [{"label": "Weakness", "text": "The ablation in Section 5 removes components one at a time, but never tests them together."}]},
+        {"title": "Seed sensitivity",
+         "quotes": [{"label": "Question", "text": "How sensitive are the results to the choice of random seed?"}]}
+      ]
+    },
+    {
+      "name": "Cd34",
+      "score": "Rating 6 · Confidence 4",
+      "strengths": [
+        {"label": "Strength", "text": "The writing is clear and the figures are easy to follow. I appreciate that the authors release code and data."}
+      ],
+      "points": [
+        {"title": "Small human study",
+         "quotes": [{"label": "Weakness", "text": "The human study has only 12 participants, which limits the strength of the conclusions."}]},
+        {"title": "Typos",
+         "quotes": [{"label": "Weakness", "text": "There are several typos, e.g. \"dataest\" in Table 2."}]}
+      ]
+    }
+  ]
+}
