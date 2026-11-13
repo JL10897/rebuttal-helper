@@ -1,35 +1,117 @@
 {
-  "title": "Rebuttal Notes: Toy Example",
+  "schema": "rebuttal-helper-points/2",
+  "title": "Rebuttal: Toy Example",
   "pageId": "toy-example",
+  "char_limit": 5000,
+  "general_response": {
+    "note": "Answers the shared question on baselines."
+  },
   "reviewers": [
     {
       "name": "Ab12",
       "score": "Rating 4 · Confidence 3",
       "strengths": [
-        {"label": "Strength", "text": "The paper studies an important and timely problem. The proposed dataset is carefully constructed and the annotation guidelines are clearly documented."}
+        {
+          "label": "Strength",
+          "text": "The paper studies an important and timely problem. The proposed dataset is carefully constructed and the annotation guidelines are clearly documented."
+        }
       ],
       "points": [
-        {"title": "Only two older baselines",
-         "quotes": [
-           {"label": "Weakness", "text": "The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods."},
-           {"label": "Question", "text": "Could the authors compare against at least one recent baseline?"}]},
-        {"title": "Ablation never combines components",
-         "quotes": [{"label": "Weakness", "text": "The ablation in Section 5 removes components one at a time, but never tests them together."}]},
-        {"title": "Seed sensitivity",
-         "quotes": [{"label": "Question", "text": "How sensitive are the results to the choice of random seed?"}]}
+        {
+          "title": "Only two older baselines",
+          "paraphrase": "Both baselines are from 2023. Do the gains hold against a recent method?",
+          "type": "general_response",
+          "quotes": [
+            {
+              "label": "Weakness",
+              "text": "The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods."
+            },
+            {
+              "label": "Question",
+              "text": "Could the authors compare against at least one recent baseline?"
+            }
+          ]
+        },
+        {
+          "title": "Ablation never combines components",
+          "paraphrase": "The ablation removes components one at a time. What happens when they are removed together?",
+          "type": "own_reply",
+          "quotes": [
+            {
+              "label": "Weakness",
+              "text": "The ablation in Section 5 removes components one at a time, but never tests them together."
+            }
+          ]
+        },
+        {
+          "title": "Seed sensitivity",
+          "paraphrase": "How sensitive are the results to the random seed?",
+          "type": "own_reply",
+          "new_result": "ready",
+          "quotes": [
+            {
+              "label": "Question",
+              "text": "How sensitive are the results to the choice of random seed?"
+            }
+          ]
+        }
       ]
     },
     {
       "name": "Cd34",
       "score": "Rating 6 · Confidence 4",
       "strengths": [
-        {"label": "Strength", "text": "The writing is clear and the figures are easy to follow. I appreciate that the authors release code and data."}
+        {
+          "label": "Strength",
+          "text": "The writing is clear and the figures are easy to follow. I appreciate that the authors release code and data."
+        }
       ],
       "points": [
-        {"title": "Small human study",
-         "quotes": [{"label": "Weakness", "text": "The human study has only 12 participants, which limits the strength of the conclusions."}]},
-        {"title": "Typos",
-         "quotes": [{"label": "Weakness", "text": "There are several typos, e.g. \"dataest\" in Table 2."}]}
+        {
+          "title": "Small human study",
+          "paraphrase": "With only 12 participants, how strong are the conclusions of the human study?",
+          "type": "own_reply",
+          "quotes": [
+            {
+              "label": "Weakness",
+              "text": "The human study has only 12 participants, which limits the strength of the conclusions."
+            }
+          ]
+        },
+        {
+          "title": "Typos",
+          "paraphrase": "There are several typos, e.g. in Table 2.",
+          "type": "own_reply",
+          "quotes": [
+            {
+              "label": "Weakness",
+              "text": "There are several typos, e.g. \"dataest\" in Table 2."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "comments": [
+    {
+      "ids": [
+        "general"
+      ],
+      "note": "Post on the paper's main thread; all reviewers see it."
+    },
+    {
+      "ids": [
+        "ab12-open",
+        "ab12-1",
+        "ab12-2",
+        "ab12-3"
+      ]
+    },
+    {
+      "ids": [
+        "cd34-open",
+        "cd34-1",
+        "cd34-2"
       ]
     }
   ]

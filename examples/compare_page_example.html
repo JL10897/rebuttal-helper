@@ -1,0 +1,496 @@
+<meta charset="utf-8">
+<title>Rebuttal Workbench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky bar; style box; overview strip; per reviewer one card per item: quotes, notes, model drafts side by side, final box */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#1b2230; --muted:#5b6475; --line:#dde1e8;
+  --accent:#2f4f8f; --accent-soft:#e7ecf6; --ok:#2b7a78; --warn:#b7791f; --bad:#b3372b; --field:#fbfcfd;
+  --m1:#2f4f8f; --m2:#7a4a8f; --m3:#2b7a78; --m4:#a14a2a; --m5:#4a6a1f; --m6:#5b6475;
+  --g1:#c2410c; --g2:#1d6fb8; --g3:#7c3aed; --g4:#15803d;
+  --s-notes:#e9edf5; --s-drafts:#c9d6ee; --s-final:#2b7a78;
+  --sans:"IBM Plex Sans","PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1a2029; --ink:#e4e8ef; --muted:#9aa3b2; --line:#2c3440;
+  --accent:#8fb0ec; --accent-soft:#223049; --ok:#5cc0bb; --warn:#e2b05a; --bad:#ec7d70; --field:#151a22;
+  --m1:#8fb0ec; --m2:#c9a3e0; --m3:#5cc0bb; --m4:#f0a07c; --m5:#a8cf6a; --m6:#9aa3b2;
+  --g1:#f59e6b; --g2:#7cb8f0; --g3:#b99cf5; --g4:#6fd39a;
+  --s-notes:#26303f; --s-drafts:#2f4468; --s-final:#3a9a95; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --ink:#e4e8ef; --muted:#9aa3b2; --line:#2c3440;
+  --accent:#8fb0ec; --accent-soft:#223049; --ok:#5cc0bb; --warn:#e2b05a; --bad:#ec7d70; --field:#151a22;
+  --m1:#8fb0ec; --m2:#c9a3e0; --m3:#5cc0bb; --m4:#f0a07c; --m5:#a8cf6a; --m6:#9aa3b2;
+  --g1:#f59e6b; --g2:#7cb8f0; --g3:#b99cf5; --g4:#6fd39a;
+  --s-notes:#26303f; --s-drafts:#2f4468; --s-final:#3a9a95; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1240px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.bar h1{font-size:16px;margin:0;font-weight:600}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
+.nav a{font-family:var(--mono);font-size:12.5px;text-decoration:none;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:3px 9px}
+a:focus-visible,button:focus-visible,textarea:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.spacer{flex:1}
+.progress{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+button.submit{font:inherit;font-weight:500;font-size:14px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;padding:7px 14px;cursor:pointer}
+button.submit:disabled{opacity:.55;cursor:default}
+button.plain,.fold-all{font-family:var(--sans);font-size:12.5px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:999px;padding:3px 10px;cursor:pointer}
+.submitted{font-size:12.5px;color:var(--ok)}
+.wrap{max-width:1240px;margin:0 auto;padding-block:24px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.banner{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.banner.bad{color:var(--bad)}
+section.reviewer{display:flex;flex-direction:column;gap:14px;scroll-margin-top:70px}
+.rhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+.rhead h2{font-family:var(--mono);font-size:20px;margin:0;font-weight:500}
+.rhead .score{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0;scroll-margin-top:70px}
+.card.opening,.card.general{border-color:var(--accent)}
+.chead{display:flex;gap:6px 10px;align-items:baseline;flex-wrap:wrap}
+.chead .num{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.chead h3{font-size:15.5px;margin:0;font-weight:600;text-wrap:balance;flex:1;min-width:12em}
+.tag{font-size:12px;white-space:nowrap;border-radius:999px;padding:0 8px;border:1px solid var(--line);color:var(--muted)}
+.tag.gr{border-style:dashed}
+.tag.wait{border-color:var(--warn);color:var(--warn)}
+.tag.state-final{border-color:var(--ok);color:var(--ok);font-weight:600}
+.tag.state-drafts{border-color:var(--accent);color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);white-space:nowrap}
+/* Items posted together as one comment share a color band and a live character total */
+.card[data-g]{border-left:6px solid var(--gc)}
+.gtag{font-size:12px;font-weight:600;color:var(--gc);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gtag.over{color:var(--bad)}
+/* Overview strip: one row per reviewer, one chip per item; fill = progress, dashed = answered in the General Response, amber dot = waiting for new results, bottom band = comment */
+.ov{display:grid;gap:5px}
+.ov-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ov-row .who{font-family:var(--mono);font-size:12px;color:var(--muted);width:52px}
+.chip{position:relative;font-family:var(--mono);font-size:11.5px;min-width:28px;height:24px;padding:0 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.chip.st-notes{background:var(--s-notes)}
+.chip.st-drafts{background:var(--s-drafts)}
+.chip.st-final{background:var(--s-final);border-color:var(--s-final);color:#fff}
+.chip.is-gr{border-style:dashed;border-color:var(--muted)}
+.chip.is-wait::after{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.chip[data-g]{box-shadow:inset 0 -4px 0 var(--gc)}
+.ov-legend{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px}
+.ov-legend .chip{min-width:18px;height:16px;padding:0}
+details summary{cursor:pointer;color:var(--accent);font-size:13.5px;font-weight:500}
+details[open] summary{margin-bottom:8px}
+blockquote{margin:0 0 8px;padding:9px 12px;background:var(--bg);border-radius:6px;font-size:13.5px;line-height:1.6;overflow-wrap:anywhere}
+blockquote:last-child{margin-bottom:0}
+blockquote b{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.models{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:10px}
+@media (max-width:900px){.models{grid-template-columns:minmax(0,1fr)}}
+.model{border:1px solid var(--line);border-top:3px solid var(--mc);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--surface)}
+.model .mhead{display:flex;align-items:center;gap:8px}
+.model .mname{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--mc);flex:1;overflow-wrap:anywhere}
+.model .meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.reply{font-size:14px;line-height:1.65;overflow-wrap:anywhere;white-space:pre-line}
+.reply p{margin:0 0 8px}.reply p:last-child{margin-bottom:0}
+.reply .tbl{overflow-x:auto;margin:0 0 8px}
+.reply table{border-collapse:collapse;font-size:12.5px;line-height:1.45;white-space:normal}
+.reply th,.reply td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.reply th{background:var(--bg);font-weight:600}
+.flags{font-size:12.5px;color:var(--warn)}
+.flags summary{color:var(--warn);font-size:12.5px}
+.flags ul,.flags ol{margin:0;padding-left:18px;color:var(--ink)}
+.flags.logic summary{color:var(--accent)}
+.flags li{margin-bottom:4px}
+button.use{font:inherit;font-size:12px;color:var(--mc);background:transparent;border:1px solid var(--mc);border-radius:999px;padding:2px 9px;cursor:pointer}
+.box label.lab{font-size:13.5px;font-weight:600;display:block;margin-bottom:6px}
+textarea{width:100%;box-sizing:border-box;min-height:110px;resize:vertical;font:inherit;font-size:14.5px;line-height:1.6;color:var(--ink);background:var(--field);border:1px solid var(--accent);border-radius:6px;padding:9px 11px}
+textarea.notes{border-color:var(--line)}
+textarea.style{min-height:320px;font-family:var(--mono);font-size:12.5px}
+textarea::placeholder{color:var(--muted)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px;flex-wrap:wrap}
+.foot .donebox{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink);cursor:pointer}
+.st-saved{color:var(--ok)} .st-pending{color:var(--warn)} .st-error{color:var(--bad)}
+.muted{color:var(--muted);font-size:13px;margin:0}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+</style>
+
+<header class="bar"><div class="bar-in">
+  <h1 id="title">Rebuttal Workbench</h1>
+  <nav class="nav" id="nav" aria-label="Reviewers"></nav>
+  <button class="fold-all" id="fold-all" type="button">Open all drafts</button>
+  <span class="spacer"></span>
+  <span class="progress" id="progress"></span>
+  <button class="submit" id="submit" type="button">Submit to Claude</button>
+  <span class="submitted" id="submitted"></span>
+</div></header>
+
+<main class="wrap">
+  <div class="banner" id="banner">Connecting to storage…</div>
+  <details class="card box" id="style-card">
+    <summary>Style box: the system prompt every drafting model receives</summary>
+    <p class="muted">Edit freely. Claude lists what you changed as new rules and asks before saving them to your style archive.</p>
+    <textarea class="style" id="style-text" spellcheck="false" aria-label="Style box"></textarea>
+    <div class="foot"><span class="count"></span><span class="status"></span></div>
+  </details>
+  <section class="card" aria-label="Overview">
+    <div class="ov" id="ov"></div>
+    <div class="ov-legend">
+      <span><span class="chip"></span> empty</span><span><span class="chip st-notes"></span> notes</span>
+      <span><span class="chip st-drafts"></span> drafts</span><span><span class="chip st-final"></span> final, done</span>
+      <span><span class="chip is-gr"></span> answered in the General Response</span>
+      <span><span class="chip is-wait"></span> waiting for new results</span>
+      <span>bottom band: the comment it is posted in</span>
+    </div>
+  </section>
+  <div id="sections"></div>
+</main>
+
+<script>
+const DATA = {"title": "Rebuttal: Toy Example", "pageId": "toy-example", "charLimit": 5000, "style": "# Author style archive\n\nCopy this file to `style/private/author_style.md` (that folder is ignored by git, so your rules and references stay private) and keep it there. The style box on the compare page is filled from it, and every model that drafts a reply receives the style box as its system prompt.\n\nEnd each rule with its date and source in brackets: which paper, which feedback. A rule here holds for any paper. A special case tied to one reply, one reviewer or one sentence belongs in that point's brief, not here.\n\n## Rules for every reply\n\n### Voice\n\n- Short, simple sentences, one idea each. Plain words. [YYYY-MM-DD, <paper> rebuttal, <which feedback>]\n\n### Thanks\n\n- Thank the reviewer once, for something specific they said. [YYYY-MM-DD, <paper> rebuttal, <which feedback>]\n\n### Structure\n\n### Revisions\n\n### Not rules\n\nHabits that were proposed and rejected. Do not apply them.\n\n## Reference breakdowns\n\nOne section per file in `style/private/references/`. Learn the argument flow and the tone of each reference. Do not copy its wording.\n\n### 01. <short name> (`references/01_<name>.txt`)\n\nHow a response opens:\n\nHow a point moves:\n\nHow a response closes:\n\nSmall habits worth borrowing:\n\nDo not borrow:\n", "models": ["Model A", "Model B"], "items": [{"id": "general", "reviewer": null, "kind": "general", "title": "General Response", "note": "Answers the shared question on baselines.", "quotes": [{"label": "Weakness", "text": "The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods."}, {"label": "Question", "text": "Could the authors compare against at least one recent baseline?"}], "covers": ["ab12-1"], "drafts": []}, {"id": "ab12-open", "reviewer": "Ab12", "kind": "opening", "title": "Opening", "quotes": [{"label": "Strength", "text": "The paper studies an important and timely problem. The proposed dataset is carefully constructed and the annotation guidelines are clearly documented."}], "drafts": []}, {"id": "ab12-1", "reviewer": "Ab12", "kind": "point", "n": 1, "title": "Only two older baselines", "paraphrase": "Both baselines are from 2023. Do the gains hold against a recent method?", "type": "general_response", "new_result": null, "quotes": [{"label": "Weakness", "text": "The evaluation uses only two baselines, both from 2023. It is unclear whether the gains hold against more recent methods."}, {"label": "Question", "text": "Could the authors compare against at least one recent baseline?"}], "sentences": 3, "drafts": []}, {"id": "ab12-2", "reviewer": "Ab12", "kind": "point", "n": 2, "title": "Ablation never combines components", "paraphrase": "The ablation removes components one at a time. What happens when they are removed together?", "type": "own_reply", "new_result": null, "quotes": [{"label": "Weakness", "text": "The ablation in Section 5 removes components one at a time, but never tests them together."}], "sentences": 1, "drafts": [{"model": "Model A", "reply": "Good question. Removing two components together lowers accuracy more than removing either alone, so they help in different ways. We have added this result to Section 5.", "logic": ["Point 1: sentence 1"], "flags": []}, {"model": "Model B", "reply": "Good question. When we remove both components, accuracy drops more than with either one removed. They therefore play different roles. The new result is in Section 5.", "logic": ["Point 1: sentence 1"], "flags": []}]}, {"id": "ab12-3", "reviewer": "Ab12", "kind": "point", "n": 3, "title": "Seed sensitivity", "paraphrase": "How sensitive are the results to the random seed?", "type": "own_reply", "new_result": "ready", "quotes": [{"label": "Question", "text": "How sensitive are the results to the choice of random seed?"}], "sentences": 1, "drafts": []}, {"id": "cd34-open", "reviewer": "Cd34", "kind": "opening", "title": "Opening", "quotes": [{"label": "Strength", "text": "The writing is clear and the figures are easy to follow. I appreciate that the authors release code and data."}], "drafts": []}, {"id": "cd34-1", "reviewer": "Cd34", "kind": "point", "n": 1, "title": "Small human study", "paraphrase": "With only 12 participants, how strong are the conclusions of the human study?", "type": "own_reply", "new_result": null, "quotes": [{"label": "Weakness", "text": "The human study has only 12 participants, which limits the strength of the conclusions."}], "sentences": 1, "drafts": [{"model": "Model A", "reply": "The study is small, as Section 6 says. It checks that the automatic scores agree with people, and they do.", "logic": ["Point 1: sentence 1"], "flags": []}, {"model": "Model B", "reply": "Twelve participants is a small sample, which Section 6 notes. The study only checks agreement between automatic scores and people.", "logic": ["Point 1: sentence 1"], "flags": []}]}, {"id": "cd34-2", "reviewer": "Cd34", "kind": "point", "n": 2, "title": "Typos", "paraphrase": "There are several typos, e.g. in Table 2.", "type": "own_reply", "new_result": null, "quotes": [{"label": "Weakness", "text": "There are several typos, e.g. \"dataest\" in Table 2."}], "sentences": 2, "drafts": []}], "reviewers": [{"name": "Ab12", "score": "Rating 4 · Confidence 3"}, {"name": "Cd34", "score": "Rating 6 · Confidence 4"}], "groups": [["general"], ["ab12-open", "ab12-1", "ab12-2", "ab12-3"], ["cd34-open", "cd34-1", "cd34-2"]]};
+const LIMIT = DATA.charLimit;
+
+const el = (tag, attrs = {}, kids = []) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "text") n.textContent = v; else if (k === "class") n.className = v; else n.setAttribute(k, v);
+  }
+  for (const k of kids) n.append(k);
+  return n;
+};
+const chars = s => [...s].length;
+const sentenceCount = t => (t.replace(/^\|.*$/gm, "").match(/[.?!](?=\s|$)/g) || []).length;
+const byId = Object.fromEntries(DATA.items.map(i => [i.id, i]));
+const labelOf = it => it.kind === "general" ? "GR" : it.kind === "opening" ? `${it.reviewer} opening` : `${it.reviewer} · ${it.n}`;
+const modelColor = name => `var(--m${DATA.models.indexOf(name) % 6 + 1})`;
+document.getElementById("title").textContent = DATA.title;
+document.title = DATA.title;
+
+// Render reply text: blank-line paragraphs; consecutive lines starting with "|" become a table.
+function renderReply(text) {
+  const box = el("div", {class: "reply"});
+  const lines = text.split("\n");
+  let para = [];
+  const flush = () => { if (para.join("").trim()) box.append(el("p", {text: para.join("\n").trim()})); para = []; };
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith("|")) {
+      flush();
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) rows.push(lines[i++].trim());
+      i--;
+      const cells = r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const body = rows.filter(r => !/^\|[\s:\-|]+\|$/.test(r));
+      const t = el("table");
+      const bold = c => /^\*\*(.+)\*\*$/.exec(c);
+      body.forEach((r, k) => t.append(el("tr", {}, cells(r).map(c => bold(c)
+        ? el(k === 0 ? "th" : "td", {}, [el("strong", {text: bold(c)[1]})])
+        : el(k === 0 ? "th" : "td", {text: c})))));
+      box.append(el("div", {class: "tbl"}, [t]));
+    } else if (!lines[i].trim()) flush();
+    else para.push(lines[i]);
+  }
+  flush();
+  return box;
+}
+
+// ---- Boxes: every editable field is one doc {text, updatedAt} (finals also carry done) in a collection.
+const boxes = [];   // {coll, id, ta, done?}
+const find = (coll, id) => boxes.find(b => b.coll === coll && b.id === id);
+function makeBox(coll, id, ta, done) { const b = {coll, id, ta, done}; boxes.push(b); return b; }
+const docOf = b => b.done ? {text: b.ta.value, done: b.done.checked} : {text: b.ta.value};
+const keyOf = d => JSON.stringify([d.text || "", !!d.done]);
+
+function finalBox(it) {
+  const ta = el("textarea", {id: "final-" + it.id, placeholder: "Your final reply…"});
+  const done = el("input", {type: "checkbox", id: "done-" + it.id});
+  makeBox("final", it.id, ta, done);
+  return el("div", {class: "box"}, [
+    el("label", {class: "lab", for: "final-" + it.id, text: "Final"}), ta,
+    el("div", {class: "foot"}, [el("span", {class: "count"}),
+      el("label", {class: "donebox", for: "done-" + it.id}, [done, document.createTextNode("Done")]), el("span", {class: "status"})]),
+  ]);
+}
+function notesBox(it) {
+  const ta = el("textarea", {class: "notes", id: "notes-" + it.id, placeholder: "Your notes, in any language, as rough as you like…"});
+  makeBox("notes", it.id, ta);
+  const d = el("details", {class: "box notes-wrap"}, [el("summary", {text: "Your notes"}), ta,
+    el("div", {class: "foot"}, [el("span", {class: "count"}), el("span", {class: "status"})])]);
+  d.open = !it.drafts.length;
+  return d;
+}
+function modelCol(d, it) {
+  const use = el("button", {class: "use", type: "button", text: "Use in final"});
+  use.addEventListener("click", () => {
+    const ta = find("final", it.id).ta;
+    ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, "") + "\n\n" + d.reply : d.reply;
+    ta.dispatchEvent(new Event("input"));
+    ta.focus();
+  });
+  const col = el("div", {class: "model", style: `--mc:${modelColor(d.model)}`}, [
+    el("div", {class: "mhead"}, [el("span", {class: "mname", text: d.model}),
+      el("span", {class: "meta", text: `${sentenceCount(d.reply)} sent. · ${chars(d.reply)} chars`}), use]),
+    renderReply(d.reply),
+  ]);
+  const strip = s => String(s).replace(/^\s*\d+[.、)]\s*/, "");
+  if (d.logic.length) col.append(el("details", {class: "flags logic"}, [el("summary", {text: "Which sentence carries each point"}), el("ol", {}, d.logic.map(s => el("li", {text: strip(s)})))]));
+  if (d.flags.length) col.append(el("details", {class: "flags"}, [el("summary", {text: `Notes for you (${d.flags.length})`}), el("ul", {}, d.flags.map(f => el("li", {text: f})))]));
+  return col;
+}
+const stateTag = {};
+function card(it) {
+  const tags = [];
+  if (it.type === "general_response") tags.push(el("span", {class: "tag gr", text: "General Response"}));
+  if (it.new_result) tags.push(el("span", {class: "tag wait", text: it.new_result === "pending" ? "new result: waiting" : "new result: ready"}));
+  const st = el("span", {class: "tag"}); stateTag[it.id] = st; tags.push(st);
+  if (it.kind === "point") tags.push(el("span", {class: "hint", text: `reviewer: ${it.sentences} sentences`}));
+  const title = it.kind === "point" ? it.title : it.kind === "opening" ? "Opening: thanks and overall answer" : "General Response to all reviewers";
+  const kids = [el("div", {class: "chead"}, [el("span", {class: "num", text: labelOf(it)}), el("h3", {text: title}), ...tags])];
+  if (it.note) kids.push(el("p", {class: "muted", text: it.note}));
+  if (it.quotes.length) {
+    const summary = it.kind === "opening" ? `What they appreciated (${it.quotes.length} excerpts)`
+      : it.kind === "general" ? `Points it answers: ${it.covers.map(i => labelOf(byId[i])).join(", ")}` : `Reviewer's words (${it.quotes.length} excerpts)`;
+    kids.push(el("details", {}, [el("summary", {text: summary}),
+      ...it.quotes.map(q => { const b = el("blockquote"); b.append(el("b", {text: q.label}), document.createTextNode(q.text)); return b; })]));
+  }
+  kids.push(notesBox(it));
+  if (it.drafts.length) {
+    const d = el("details", {class: "mwrap"}, [el("summary", {text: `Drafts (${it.drafts.length})`}),
+      el("div", {class: "models", style: `--cols:${it.drafts.length}`}, it.drafts.map(x => modelCol(x, it)))]);
+    d.open = true;
+    kids.push(d);
+  }
+  kids.push(finalBox(it));
+  return el("div", {class: "card " + it.kind, id: "c-" + it.id}, kids);
+}
+
+// ---- Sections and navigation
+const nav = document.getElementById("nav"), root = document.getElementById("sections");
+const general = DATA.items.find(i => i.kind === "general");
+if (general) {
+  nav.append(el("a", {href: "#general", text: "General"}));
+  root.append(el("section", {class: "reviewer", id: "general"}, [el("div", {class: "rhead"}, [el("h2", {text: "General Response"})]), card(general)]));
+}
+for (const r of DATA.reviewers) {
+  const id = "r-" + r.name.toLowerCase();
+  nav.append(el("a", {href: "#" + id, text: r.name}));
+  root.append(el("section", {class: "reviewer", id}, [
+    el("div", {class: "rhead"}, [el("h2", {text: r.name}), el("span", {class: "score", text: r.score})]),
+    ...DATA.items.filter(i => i.reviewer === r.name).map(card)]));
+}
+const styleTa = document.getElementById("style-text");
+makeBox("style", "system_prompt", styleTa);
+
+// ---- Overview strip
+const chips = {};
+(() => {
+  const ov = document.getElementById("ov");
+  const chip = it => {
+    const c = el("a", {class: "chip" + (it.type === "general_response" ? " is-gr" : "") + (it.new_result === "pending" ? " is-wait" : ""),
+      href: "#c-" + it.id, text: it.kind === "general" ? "GR" : it.kind === "opening" ? "O" : String(it.n)});
+    chips[it.id] = c;
+    return c;
+  };
+  if (general) ov.append(el("div", {class: "ov-row"}, [el("span", {class: "who", text: "General"}), chip(general)]));
+  for (const r of DATA.reviewers)
+    ov.append(el("div", {class: "ov-row"}, [el("span", {class: "who", text: r.name}), ...DATA.items.filter(i => i.reviewer === r.name).map(chip)]));
+})();
+
+// ---- Comment groups (set at assembly): one color per comment and its assembled character total
+const groupTags = [];
+(DATA.groups || []).forEach((ids, gi) => {
+  const color = `var(--g${gi % 4 + 1})`, tags = [];
+  for (const id of ids) {
+    for (const node of [document.getElementById("c-" + id), chips[id]]) if (node) { node.dataset.g = gi; node.style.setProperty("--gc", color); }
+    const tag = el("span", {class: "gtag"}); tag.style.setProperty("--gc", color);
+    document.querySelector(`#c-${id} .chead`).append(tag); tags.push(tag);
+  }
+  groupTags.push({ids, n: gi + 1, tags});
+});
+// Same assembly as build_submit_page.py: bold "Point n." heading per point, "---" between blocks.
+const fixEnum = t => t.replace(/(\S[^\n]*)\n(?=\((?:[ivxlc]+|[a-z]|\d{1,2})\) )/g, "$1\n\n");
+function assembled(ids) {
+  return ids.map(id => {
+    const it = byId[id], t = fixEnum(find("final", id).ta.value.trim());
+    return it.kind === "point" ? `**Point ${it.n}. ${it.paraphrase}**\n\n${t}` : t;
+  }).join("\n\n---\n\n");
+}
+function updateGroups() {
+  for (const g of groupTags) {
+    const n = chars(assembled(g.ids));
+    for (const tag of g.tags) { tag.textContent = `comment ${g.n} · ${n.toLocaleString()} / ${LIMIT.toLocaleString()} chars`; tag.classList.toggle("over", n > LIMIT); }
+  }
+}
+
+// ---- Progress state per item: empty -> notes -> drafts -> final (done)
+function updateState(id) {
+  const it = byId[id], f = find("final", id), notes = find("notes", id).ta.value.trim();
+  const s = f.done.checked && f.ta.value.trim() ? "final" : it.drafts.length ? "drafts" : notes ? "notes" : "empty";
+  chips[id].classList.remove("st-notes", "st-drafts", "st-final");
+  if (s !== "empty") chips[id].classList.add("st-" + s);
+  stateTag[id].className = "tag state-" + s;
+  stateTag[id].textContent = s === "final" ? "done" : s;
+  chips[id].title = `${labelOf(it)}: ${s === "final" ? "done" : s}` + (it.type === "general_response" ? ", answered in the General Response" : "") + (it.new_result === "pending" ? ", waiting for new results" : "");
+}
+function updateProgress() {
+  const finals = boxes.filter(b => b.coll === "final");
+  document.getElementById("progress").textContent = `done ${finals.filter(b => b.done.checked && b.ta.value.trim()).length} / ${finals.length}`;
+}
+const foot = b => b.ta.nextElementSibling;
+function setStatus(b, kind, text) { const s = foot(b).querySelector(".status"); s.className = "status st-" + kind; s.textContent = text; }
+function refresh(b) {
+  const t = b.ta.value.trim();
+  foot(b).querySelector(".count").textContent = t ? `${sentenceCount(t)} sent. · ${t.split(/\s+/).length} words · ${chars(t)} chars` : "";
+  if (b.coll !== "style") updateState(b.id);
+  updateGroups(); updateProgress();
+}
+
+// ---- Storage: the artifact database when available, otherwise this browser (with JSON export/import)
+const lastSaved = {}, timers = {}, chains = {};
+let backend = null, readOnly = false;
+const k = b => b.coll + "/" + b.id;
+function save(b) {
+  clearTimeout(timers[k(b)]);
+  if (!backend || readOnly) return Promise.resolve();
+  const d = docOf(b);
+  if (keyOf(d) === (lastSaved[k(b)] ?? keyOf({}))) return chains[k(b)] || Promise.resolve();
+  setStatus(b, "pending", "saving…");
+  chains[k(b)] = (chains[k(b)] || Promise.resolve()).then(() => backend.set(b.coll, b.id, {...d, updatedAt: new Date().toISOString()}))
+    .then(() => {
+      lastSaved[k(b)] = keyOf(d);
+      const same = keyOf(docOf(b)) === keyOf(d);
+      setStatus(b, same ? "saved" : "pending", same ? "saved" : "not saved");
+    }, e => {
+      setStatus(b, "error", e && e.code === "invalid_argument" ? "no permission to save" : "save failed, will retry");
+      if (e && e.code === "invalid_argument") readOnly = true;
+      throw e;
+    });
+  return chains[k(b)];
+}
+function applyRemote(b, d) {
+  const remote = keyOf(d || {});
+  const dirty = keyOf(docOf(b)) !== (lastSaved[k(b)] ?? keyOf({}));
+  if (document.activeElement !== b.ta && !dirty && keyOf(docOf(b)) !== remote) {
+    b.ta.value = (d && d.text) || "";
+    if (b.done) b.done.checked = !!(d && d.done);
+    refresh(b);
+  }
+  if (!dirty || keyOf(docOf(b)) === remote) { lastSaved[k(b)] = remote; if (d && d.text) setStatus(b, "saved", "saved"); }
+}
+for (const b of boxes) {
+  const changed = () => {
+    refresh(b);
+    if (!backend) return;
+    setStatus(b, "pending", "not saved");
+    clearTimeout(timers[k(b)]);
+    timers[k(b)] = setTimeout(() => save(b).catch(() => {}), 1200);
+  };
+  b.ta.addEventListener("input", changed);
+  b.ta.addEventListener("blur", () => { if (backend) save(b).catch(() => {}); });
+  if (b.done) b.done.addEventListener("change", () => { changed(); save(b).catch(() => {}); });
+  refresh(b);
+}
+// The style box starts from the archive text until a saved copy exists.
+let styleSaved = false;
+function styleFallback() {
+  const b = find("style", "system_prompt");
+  if (!styleSaved && !b.ta.value) { b.ta.value = DATA.style; refresh(b); setStatus(b, "pending", "from your style archive, not saved here yet"); }
+}
+
+(() => {
+  const btn = document.getElementById("fold-all"), wraps = [...document.querySelectorAll("details.mwrap")];
+  if (!wraps.length) { btn.hidden = true; return; }
+  const label = () => { btn.textContent = wraps.every(d => d.open) ? "Close all drafts" : "Open all drafts"; };
+  btn.addEventListener("click", () => { const open = !wraps.every(d => d.open); wraps.forEach(d => { d.open = open; }); label(); });
+  wraps.forEach(d => d.addEventListener("toggle", label));
+  label();
+})();
+
+const banner = document.getElementById("banner"), submitBtn = document.getElementById("submit"), submittedEl = document.getElementById("submitted");
+const fmt = iso => { try { return new Date(iso).toLocaleString(undefined, {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"}); } catch { return iso; } };
+const summary = () => ({notes: boxes.filter(b => b.coll === "notes" && b.ta.value.trim()).length,
+  finals: boxes.filter(b => b.coll === "final" && b.ta.value.trim()).length,
+  done: boxes.filter(b => b.coll === "final" && b.done.checked && b.ta.value.trim()).length, total: DATA.items.length});
+
+function exportJson() {
+  const out = {schema: "rebuttal-helper-workbench/1", pageId: DATA.pageId, exportedAt: new Date().toISOString(), notes: {}, final: {}, style: {}};
+  for (const b of boxes) out[b.coll][b.id] = docOf(b);
+  const a = el("a", {href: URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], {type: "application/json"})),
+    download: `rebuttal_workbench_${new Date().toISOString().slice(0, 10)}.json`});
+  document.body.append(a); a.click(); a.remove();
+}
+function importJson(file) {
+  file.text().then(t => {
+    const d = JSON.parse(t);
+    if (d.schema !== "rebuttal-helper-workbench/1" || d.pageId !== DATA.pageId) throw new Error(`not an export of this page (schema ${d.schema}, pageId ${d.pageId})`);
+    for (const b of boxes) if (d[b.coll] && d[b.coll][b.id]) {
+      b.ta.value = d[b.coll][b.id].text || ""; if (b.done) b.done.checked = !!d[b.coll][b.id].done;
+      refresh(b); save(b).catch(() => {});
+    }
+  }).catch(e => { banner.className = "banner bad"; banner.hidden = false; banner.textContent = "Import failed: " + e.message; });
+}
+
+function localBackend() {
+  const key = "rebuttal-workbench-" + DATA.pageId;
+  let blob;
+  try { blob = JSON.parse(localStorage.getItem(key) || "{}"); } catch { blob = null; }
+  if (blob === null) return null;
+  return {
+    blob,
+    set(coll, id, d) {
+      (blob[coll] = blob[coll] || {})[id] = d;
+      try { localStorage.setItem(key, JSON.stringify(blob)); return Promise.resolve(); } catch (e) { return Promise.reject(e); }
+    },
+  };
+}
+
+submitBtn.addEventListener("click", async () => {
+  if (!backend) return;
+  if (backend.local) { for (const b of boxes) await save(b).catch(() => {}); exportJson(); return; }
+  submitBtn.disabled = true; submitBtn.textContent = "Submitting…";
+  try {
+    for (const b of boxes) await save(b);
+    const at = new Date().toISOString();
+    await backend.meta.set({submittedAt: at, ...summary()});
+    submittedEl.textContent = `submitted ${fmt(at)}`;
+  } catch (e) {
+    submittedEl.textContent = "submit failed, click again";
+  } finally {
+    submitBtn.disabled = false; submitBtn.textContent = "Submit to Claude";
+  }
+});
+
+(async () => {
+  const db = window.claude ? await window.claude.use("db").catch(() => null) : null;
+  if (!db) {
+    const local = localBackend();
+    if (!local) {
+      banner.className = "banner bad";
+      banner.textContent = "This browser blocks local storage, so nothing on this page will be saved.";
+      submitBtn.disabled = true; styleFallback(); return;
+    }
+    backend = {...local, local: true};
+    for (const b of boxes) {
+      const d = (local.blob[b.coll] || {})[b.id];
+      if (d) { b.ta.value = d.text || ""; if (b.done) b.done.checked = !!d.done; lastSaved[k(b)] = keyOf(d); setStatus(b, "saved", "saved in this browser"); refresh(b); }
+    }
+    styleSaved = !!(local.blob.style || {}).system_prompt; styleFallback();
+    submitBtn.textContent = "Export JSON for Claude";
+    banner.textContent = "Saved in this browser only. When done, click \"Export JSON for Claude\" and give Claude the file.";
+    const input = el("input", {type: "file", accept: "application/json", hidden: ""});
+    input.addEventListener("change", () => { if (input.files[0]) importJson(input.files[0]); input.value = ""; });
+    const imp = el("button", {class: "plain", type: "button", text: "Import JSON"});
+    imp.addEventListener("click", () => input.click());
+    banner.append(imp, input);
+    return;
+  }
+  backend = {set: (coll, id, d) => db.collection(coll).doc(id).set(d), meta: db.doc("meta/submission")};
+  const loadTimer = setTimeout(() => { banner.textContent = "Storage has not answered yet. Wait before writing, then reload."; }, 10000);
+  const loaded = new Set();
+  for (const coll of ["notes", "final", "style"]) {
+    db.collection(coll).onSnapshot(snap => {
+      for (const d of snap.docs) { const b = find(coll, d.id); if (b) applyRemote(b, d.data()); }
+      if (coll === "style") { styleSaved = snap.docs.some(d => d.id === "system_prompt"); styleFallback(); }
+      if (!snap.metadata.fromCache) { loaded.add(coll); if (loaded.size === 3) { clearTimeout(loadTimer); banner.hidden = true; } }
+    }, () => {
+      clearTimeout(loadTimer);
+      banner.className = "banner bad"; banner.hidden = false;
+      banner.textContent = `Reading saved ${coll} failed. Reload the page.`;
+    });
+  }
+  backend.meta.onSnapshot(s => { if (s.exists) submittedEl.textContent = `submitted ${fmt(s.data().submittedAt)}`; }, () => {});
+})();
+</script>

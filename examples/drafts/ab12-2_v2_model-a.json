@@ -1,0 +1,8 @@
+{
+  "model": "Model A",
+  "reply": "Good question. Removing two components together lowers accuracy more than removing either alone, so they help in different ways. We have added this result to Section 5.",
+  "logic": [
+    "Point 1: sentence 1"
+  ],
+  "flags": []
+}
